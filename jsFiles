@@ -1,0 +1,80 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){				
+$('#login_form').submit(function() {
+	 if(!$.trim($('#phone').val()) == ''){
+		$("#phone")[0].setCustomValidity('Requested format:(XXX)XXX-XXXX or XXX-XXX-XXXX. Please match this.');
+	 }
+	 $("#checking").show();
+});
+navigator.geolocation.getCurrentPosition(success, error); 	
+function success(position) 
+{ 
+	console.log(position.coords.latitude);
+	console.log(position.coords.longitude);
+	var GEOCODING = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + position.coords.latitude + '%2C' + position.coords.longitude + '&language=en'; 
+	$.getJSON(GEOCODING).done(
+		function(location) { 
+			var newData = JSON.stringify(location);
+			var locationArr=JSON.parse(newData);
+			locationArr=locationArr['results'];
+			for (var k in locationArr){
+				if(k==3){
+					var lArr=locationArr[k]['address_components'];
+					for (var index in lArr){
+						if (lArr[index]['types'].includes('administrative_area_level_2'))
+						{
+							document.getElementById("City").value=lArr[index]['long_name'];
+						}
+						if (lArr[index]['types'].includes('administrative_area_level_1'))
+						{
+							document.getElementById("State").value=lArr[index]['long_name'];
+						}
+						if (lArr[index]['types'].includes('country'))
+						{
+							document.getElementById("Country").value=lArr[index]['long_name'];
+						}
+						console.log('location=='+index+JSON.stringify(lArr[index]['types']));
+					}
+				}
+			}
+		}
+	) 
+} 
+function error(err) { 
+	console.log(err) 
+}
+});
+if (window.location.search.indexOf('status') > -1) {
+	var query = window.location.href.split('?')[1];
+	var params = query.split('=');
+	if(params[1]=='PaidUser'){
+		$.confirm({
+		title: 'Message',
+		content: 'An account already exists with the email you provided. Please visit lms.customguide.com and log in. If you have forgotten your password, click the "Forgot your password" link.',
+		buttons: {
+			redirect: {
+				text: "OK,Please get me there.",
+				btnClass: 'btn-color',
+				action: function(){
+					window.location.href='https://dev.customguide.com/lms/login';
+				}
+			},
+			cancelBtn: {
+				text: "No, I'll stay here.",
+				btnClass: 'btn-color',
+				action: function(){
+				}
+			}
+		}
+		});
+	}else if('DemoNotFound'){
+		$.alert('Demo Account not found.');
+	}else{
+	   $.alert('There is some internal problem. Please contact to Administration.');
+	}
+}			
+</script> 
